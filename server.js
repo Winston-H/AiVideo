@@ -12,6 +12,7 @@ import { ensureStorage } from './services/store.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const port = Number(process.env.PORT || 3000);
+const host = process.env.HOST || '0.0.0.0';
 
 await ensureStorage();
 
@@ -30,6 +31,6 @@ app.get('/api/health', (req, res) => {
   res.json({ ok: true, service: 'ai-video-studio' });
 });
 
-app.listen(port, () => {
-  console.log(`AI Video Studio running at http://localhost:${port}`);
+app.listen(port, host, () => {
+  console.log(`AI Video Studio running at http://${host}:${port}`);
 });
