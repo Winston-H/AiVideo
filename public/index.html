@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI 短视频制作台</title>
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <div class="app-frame">
+      <aside class="side-nav" aria-label="工具导航">
+        <div class="side-brand">AI Studio</div>
+        <button id="aiCreateStep" class="side-step active" type="button">AI创作</button>
+        <button id="tkStep" class="side-step" type="button">TK视频</button>
+      </aside>
+
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">本地项目</p>
+          <h1>AI 短视频制作台</h1>
+        </div>
+      </header>
+
+      <nav id="workflowSteps" class="steps" aria-label="制作流程">
+        <button id="ideaStep" class="step active">1 创意</button>
+        <button id="scriptStep" class="step" disabled>2 剧本</button>
+        <button id="prototypeStep" class="step" disabled>3 草图</button>
+        <button id="storyboardStep" class="step" disabled>4 分镜</button>
+        <button id="videoStep" class="step" disabled>5 视频</button>
+        <button id="editorStep" class="step" disabled>6 剪辑</button>
+      </nav>
+
+      <section id="tkSection" class="tk-workspace module-section" aria-label="TK 视频生成" hidden>
+        <form id="tkForm" class="tk-card">
+          <button id="tkOptimizeBtn" class="tk-optimize" type="button">✦ AI 提示词优化</button>
+          <div class="tk-hero">
+            <p class="eyebrow">独立工具</p>
+            <h2>TK 视频生成器</h2>
+          </div>
+
+          <div class="tk-prompt">
+            <button id="tkUploadBtn" class="tk-upload" type="button">
+              <span>+</span>
+              <small>参考图</small>
+            </button>
+            <input id="tkImageInput" type="file" accept="image/png,image/jpeg,image/webp" hidden />
+            <img id="tkImagePreview" alt="参考图预览" hidden />
+            <textarea name="prompt" rows="7" placeholder="请输入主体、动作、运镜、风格和氛围。例如：一位模特在厨房展示便携榨汁杯，快速切换使用场景，真实 TikTok 带货质感。"></textarea>
+          </div>
+
+          <label>
+            远程参考图 URL
+            <input name="imageUrl" placeholder="可选。本地未公网部署时建议填公网图片 URL" />
+          </label>
+
+          <label>
+            负面词
+            <input name="negativePrompt" value="text, subtitles, watermark, flicker, deformation, object disappearing, distorted hands, distorted face" />
+          </label>
+
+          <div class="tk-controls">
+            <label>
+              市场
+              <select name="market">
+                <option>美国</option>
+                <option>英国</option>
+                <option>东南亚</option>
+                <option selected>日本</option>
+                <option>中国</option>
+              </select>
+            </label>
+            <label>
+              分辨率
+              <select name="resolution">
+                <option value="1080p">1080P</option>
+                <option value="720p" selected>720P</option>
+                <option value="480p">480P</option>
+              </select>
+            </label>
+            <label>
+              比例
+              <select name="aspectRatio">
+                <option value="9:16" selected>9:16</option>
+                <option value="16:9">16:9</option>
+                <option value="1:1">1:1</option>
+                <option value="4:5">4:5</option>
+              </select>
+            </label>
+            <label>
+              语言
+              <select name="language">
+                <option>中文</option>
+                <option>英语</option>
+                <option selected>日语</option>
+                <option>泰语</option>
+                <option>印尼语</option>
+              </select>
+            </label>
+            <label>
+              时长
+              <select name="duration">
+                <option value="18" selected>约 18 秒</option>
+                <option value="10">约 10 秒</option>
+                <option value="5">约 5 秒</option>
+                <option value="3">约 3 秒</option>
+              </select>
+            </label>
+          </div>
+
+          <input name="motion" value="商品细节自然展示，动作流畅，带真实短视频节奏" hidden />
+          <input name="camera" value="轻微推拉和横移，适合带货展示" hidden />
+          <input name="frameRate" value="24" hidden />
+          <button id="tkGenerateBtn" class="tk-send" type="submit">↑</button>
+        </form>
+
+        <section class="panel list-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">TK 素材</p>
+              <h2>任务队列</h2>
+              <p class="eyebrow">查看生成任务状态（最近10条）</p>
+            </div>
+            <button id="tkRefreshBtn" class="ghost" type="button">刷新状态</button>
+          </div>
+          <div class="queue-tabs">
+            <button id="tkRunningTab" class="active" type="button">进行中 (0)</button>
+            <button id="tkDoneTab" type="button">已完成 (0)</button>
+          </div>
+          <div id="tkEmptyState" class="empty">还没有 TK 视频。上传参考图或输入提示词后生成。</div>
+          <div id="tkVideoList" class="queue-list"></div>
+        </section>
+      </section>
+
+      <section id="ideasSection" class="workspace module-section" aria-label="创意灵感生成">
+        <form id="ideaForm" class="panel form-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">流程 1</p>
+              <h2>创意灵感生成</h2>
+            </div>
+            <span class="pill">AI 批量生成</span>
+          </div>
+
+          <label>
+            题材分类
+            <select name="category">
+              <option>剧情反转</option>
+              <option>知识科普</option>
+              <option>产品广告</option>
+              <option>口播观点</option>
+              <option>生活方式</option>
+            </select>
+          </label>
+
+          <label>
+            风格定位
+            <select name="style">
+              <option>简约高级</option>
+              <option>电影感</option>
+              <option>幽默轻快</option>
+              <option>悬疑紧张</option>
+              <option>真实纪实</option>
+            </select>
+          </label>
+
+          <div class="grid-2">
+            <label>
+              时长
+              <select name="duration">
+                <option>30秒</option>
+                <option>60秒</option>
+                <option>90秒</option>
+                <option>3分钟</option>
+              </select>
+            </label>
+            <label>
+              创意数量
+              <input name="count" type="number" min="1" max="8" value="4" />
+            </label>
+          </div>
+
+          <label>
+            受众标签
+            <input name="audience" placeholder="例如：年轻职场人、宝妈、创业者" />
+          </label>
+
+          <label>
+            关键词
+            <textarea name="keywords" rows="4" placeholder="输入产品、主题、情绪或核心卖点"></textarea>
+          </label>
+
+          <button id="generateBtn" class="primary" type="submit">生成创意</button>
+        </form>
+
+        <section class="panel list-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">已保存</p>
+              <h2>创意列表</h2>
+            </div>
+            <button id="refreshBtn" class="ghost" type="button">刷新</button>
+          </div>
+
+          <div id="emptyState" class="empty">还没有创意。填写左侧表单后生成。</div>
+          <div id="newIdeasGroup" class="idea-group" hidden>
+            <div class="idea-group-head">
+              <span>本次新生成</span>
+              <small id="newIdeasCount">0 条</small>
+            </div>
+            <div id="newIdeasList" class="idea-list"></div>
+          </div>
+          <details id="historyIdeasGroup" class="idea-group idea-history" hidden>
+            <summary>
+              <span>历史记录</span>
+              <small id="historyIdeasCount">0 条</small>
+            </summary>
+            <div id="ideasList" class="idea-list"></div>
+          </details>
+        </section>
+      </section>
+
+      <section id="scriptsSection" class="workspace module-section" aria-label="完整结构化 AI 剧本创作" hidden>
+        <form id="scriptForm" class="panel form-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">流程 2</p>
+              <h2>AI 剧本创作</h2>
+            </div>
+            <span class="pill">结构化输出</span>
+          </div>
+
+          <div id="selectedIdeaBox" class="selected-box">请先从创意列表选择一个创意。</div>
+
+          <label>
+            剧本类型
+            <select name="type">
+              <option>短视频</option>
+              <option>剧情短片</option>
+              <option>广告</option>
+              <option>口播脚本</option>
+            </select>
+          </label>
+
+          <button id="scriptGenerateBtn" class="primary" type="submit">生成完整剧本</button>
+        </form>
+
+        <section class="panel list-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">可编辑</p>
+              <h2>结构化剧本</h2>
+            </div>
+            <div class="toolbar">
+              <button id="saveScriptBtn" class="ghost" type="button" disabled>保存</button>
+              <button id="exportScriptBtn" class="ghost" type="button" disabled>导出 TXT</button>
+              <button id="splitScriptBtn" class="ghost" type="button" disabled>拆解并进入草图</button>
+            </div>
+          </div>
+
+          <textarea id="scriptEditor" class="script-editor" spellcheck="false" placeholder="生成剧本后可在这里编辑 JSON。"></textarea>
+          <div id="storyboardPromptBox" class="prompt-box" hidden></div>
+        </section>
+      </section>
+
+      <section id="prototypesSection" class="workspace module-section" aria-label="剧本转镜头原型草图" hidden>
+        <section class="panel form-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">流程 3</p>
+              <h2>镜头原型草图</h2>
+            </div>
+            <span class="pill">本地 SVG</span>
+          </div>
+
+          <div id="selectedScriptBox" class="selected-box">请先生成剧本。</div>
+          <button id="prototypeGenerateBtn" class="primary" type="button" disabled>生成镜头草图</button>
+          <input id="prototypeImageInput" type="file" accept="image/png,image/jpeg,image/webp" hidden />
+          <button id="prototypeUploadBtn" class="primary secondary" type="button" disabled>上传本地图片</button>
+        </section>
+
+        <section class="panel list-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">素材库</p>
+              <h2>原型列表</h2>
+            </div>
+            <button id="refreshPrototypeBtn" class="ghost" type="button" disabled>刷新</button>
+          </div>
+
+          <div id="prototypeEmptyState" class="empty">还没有原型草图。先从剧本生成。</div>
+          <div id="prototypeList" class="prototype-list"></div>
+        </section>
+      </section>
+
+      <section id="storyboardsSection" class="workspace module-section" aria-label="精细化分镜插画生成" hidden>
+        <form id="storyboardForm" class="panel form-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">流程 4</p>
+              <h2>分镜插画生成</h2>
+            </div>
+            <span class="pill">Agnes Image</span>
+          </div>
+
+          <label>
+            分辨率
+            <select name="size">
+              <option>1024x768</option>
+              <option>768x1024</option>
+              <option>1024x1024</option>
+            </select>
+          </label>
+
+          <label>
+            画风
+            <input name="style" value="电影感写实分镜插画" />
+          </label>
+
+          <label>
+            负面词
+            <textarea name="negativePrompt" rows="4" placeholder="例如：低清晰度、水印、文字、畸形手指"></textarea>
+          </label>
+
+          <button id="storyboardGenerateBtn" class="primary" type="submit" disabled>批量生成分镜图</button>
+        </form>
+
+        <section class="panel list-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">唯一视频素材来源</p>
+              <h2>分镜图集</h2>
+            </div>
+            <div class="toolbar">
+              <button id="selectAllStoryboardBtn" class="ghost" type="button" disabled>全选本组</button>
+              <button id="clearStoryboardBtn" class="ghost" type="button" disabled>清空选择</button>
+              <button id="refreshStoryboardBtn" class="ghost" type="button" disabled>刷新</button>
+            </div>
+          </div>
+
+          <div id="storyboardEmptyState" class="empty">还没有分镜图。先从原型草图批量生成。</div>
+          <div id="storyboardList" class="storyboard-list"></div>
+        </section>
+      </section>
+
+      <section id="videosSection" class="workspace module-section" aria-label="单镜头图生视频片段生成" hidden>
+        <form id="videoForm" class="panel form-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">流程 5</p>
+              <h2>图生视频片段</h2>
+            </div>
+            <span class="pill">Agnes Video</span>
+          </div>
+
+          <div id="selectedStoryboardBox" class="selected-box">请先选中一张分镜图。</div>
+
+          <div class="grid-2">
+            <label>
+              时长
+              <select name="duration">
+                <option value="3">约 3 秒</option>
+                <option value="5" selected>约 5 秒</option>
+                <option value="10">约 10 秒</option>
+                <option value="18">约 18 秒</option>
+              </select>
+            </label>
+            <label>
+              帧率
+              <input name="frameRate" type="number" min="1" max="60" value="24" />
+            </label>
+          </div>
+
+          <label>
+            清晰度
+            <select name="resolution">
+              <option value="1080p" selected>1080p</option>
+              <option value="720p">720p</option>
+            </select>
+            <span class="field-note">默认 1080p + 5 秒，优先保证最高画质；长视频会按 Agnes 帧数上限自动压帧。</span>
+          </label>
+
+          <label>
+            动态幅度
+            <input name="motion" value="轻微动态，主体自然呼吸感" />
+          </label>
+
+          <label>
+            运镜参数
+            <input name="camera" value="缓慢推进镜头" />
+          </label>
+
+          <button id="videoGenerateBtn" class="primary" type="submit" disabled>批量生成视频片段</button>
+        </form>
+
+        <section class="panel list-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">剪辑素材池</p>
+              <h2>视频片段</h2>
+            </div>
+            <button id="refreshVideoBtn" class="ghost" type="button" disabled>刷新状态</button>
+          </div>
+
+          <div id="videoEmptyState" class="empty">还没有视频片段。先选中分镜图并创建任务。</div>
+          <div id="videoList" class="video-list"></div>
+        </section>
+      </section>
+
+      <section id="editorSection" class="workspace module-section" aria-label="网页端在线剪辑拼接" hidden>
+        <section class="panel form-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">流程 6</p>
+              <h2>在线剪辑</h2>
+            </div>
+            <span class="pill">FFmpeg 导出</span>
+          </div>
+
+          <label>
+            片头
+            <input id="introTitle" placeholder="可选片头文字" />
+          </label>
+          <label>
+            片尾
+            <input id="outroTitle" placeholder="可选片尾文字" />
+          </label>
+          <label>
+            转场
+            <select id="transitionMode">
+              <option value="cut">直接切换</option>
+              <option value="fade">淡入淡出参数保存</option>
+            </select>
+          </label>
+
+          <button id="saveProjectBtn" class="primary" type="button">保存剪辑工程</button>
+          <button id="exportProjectBtn" class="primary secondary" type="button">导出完整 MP4</button>
+          <div id="exportResult" class="prompt-box" hidden></div>
+        </section>
+
+        <section class="panel list-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">拖拽排序</p>
+              <h2>素材轨道</h2>
+            </div>
+            <button id="loadEditorBtn" class="ghost" type="button">刷新素材</button>
+          </div>
+
+          <div id="editorEmptyState" class="empty">还没有可剪辑的本地 MP4。先完成图生视频。</div>
+          <div id="clipTrack" class="clip-track"></div>
+        </section>
+      </section>
+    </main>
+    </div>
+
+    <div id="toast" class="toast" hidden></div>
+
+    <script type="module" src="/js/modules/ideas.js"></script>
+  </body>
+</html>

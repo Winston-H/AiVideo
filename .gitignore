@@ -1,0 +1,11 @@
+.env
+node_modules/
+__pycache__/
+*.pyc
+storage/data/*.json
+storage/assets/*
+storage/scripts/*
+storage/storyboards/*
+storage/videos/*
+storage/projects/*
+!storage/**/.gitkeep
